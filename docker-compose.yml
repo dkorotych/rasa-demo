@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+  redis:
+    image: redis:alpine
+
+  duckling:
+    image: rasa/duckling
+    ports:
+      - "8000:8000"
+
+  actions:
+    build:
+      context: .
+    ports:
+      - "5055:5055"
+    deploy:
+      replicas: 3
+
+  bot:
+    image: rasa/rasa:latest
+    volumes:
+      - .:/app:ro
+      - ./credentials.yml:/app/credentials.yml:ro
+    environment:
+      - MAX_NUMBER_OF_PREDICTIONS=100
+      - TICKET_LOCK_LIFETIME=60
+      - SANIC_WORKERS=1
+      - SANIC_BACKLOG=200
+      - RASA_DUCKLING_HTTP_URL=http://duckling:8000
+    depends_on:
+      - duckling
+      - redis
+      - actions
+    command:
+      - "run"
+      - "--cors"
+      - "*"
+    ports:
+      - "5005:5005"
+    links:
+      - duckling
+      - actions
+      - redis
+    deploy:
+      replicas: 5
+
+  ui:
+    image: nginx:alpine
+    volumes:
+      - .:/usr/share/nginx/html:ro
+    ports:
+      - "80:80"

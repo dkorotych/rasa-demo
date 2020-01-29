@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>SARA</title>
+</head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<body>
+<script src="https://storage.googleapis.com/mrbot-cdn/webchat-latest.js"></script>
+<div id="webchat"></div>
+<script>
+    localStorage.clear();
+
+    WebChat.default.init({
+        selector: "#webchat",
+        // initPayload: "Hi",
+        socketUrl: "http://0.0.0.0:5005",
+        socketPath: "/socket.io/",
+        title: "SARA",
+        docViewer: false,
+        params: {
+            images: {
+                dims: {
+                    width: 300,
+                    height: 200
+                }
+            },
+            storage: "local"
+        }
+    })
+</script>
+</body>
+
+</html>

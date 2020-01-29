@@ -1,2 +1,12 @@
 action_endpoint:
-  url: http://localhost:5055/webhook
+  url: "http://actions:5055/webhook"
+lock_store:
+  type: redis
+  url: redis
+  db: 1
+tracker_store:
+  type: redis
+  url: redis
+  # timeout in seconds (5 hours)
+  record_exp: 18000
+  db: 0
