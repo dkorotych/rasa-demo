@@ -14,8 +14,6 @@ services:
       context: .
     ports:
       - "5055:5055"
-    deploy:
-      replicas: 3
 
   bot:
     image: rasa/rasa:latest
@@ -42,8 +40,6 @@ services:
       - duckling
       - actions
       - redis
-    deploy:
-      replicas: 5
 
   ui:
     image: nginx:alpine
