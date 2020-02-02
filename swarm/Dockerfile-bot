@@ -1,0 +1,12 @@
+FROM rasa/rasa:latest
+
+COPY ./config.yml /app/
+COPY ./credentials.yml /app/
+COPY ./domain.yml /app/
+COPY ./endpoints.yml /app/
+COPY ./data /app/data/
+COPY ./models /app/models/
+
+EXPOSE 5005
+
+CMD ["run", "--debug", "--cors", "*"]
