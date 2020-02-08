@@ -2,28 +2,44 @@ version: "3.7"
 
 services:
   redis:
+    hostname: redis
     image: redis:alpine
+    ports:
+      - "6379:6379"
     networks:
       - backend
+    deploy:
+      labels:
+        - "traefik.enable=false"
 
   duckling:
+    hostname: duckling
     image: rasa/duckling
     ports:
       - "8000:8000"
     networks:
       - backend
+    deploy:
+      labels:
+        - "traefik.enable=false"
 
   actions:
+    hostname: actions
     image: sara-actions:latest
     ports:
       - "5055:5055"
+    networks:
+      - backend
     deploy:
-      replicas: 1
+      replicas: 3
+      labels:
+        - "traefik.enable=false"
 
   bot:
+    hostname: bot
     image: sara-bot:latest
     ports:
-      - "5005:5005"
+      - "6006:5005"
     networks:
       - backend
     environment:
@@ -37,17 +53,63 @@ services:
       - redis
       - actions
     deploy:
-      replicas: 1
+      replicas: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.lbswarm=false"
+        - "traefik.http.routers.bot.rule=PathPrefix(`/socket.io/`)"
+        - "traefik.http.routers.bot.entrypoints=ui"
+        - "traefik.http.services.bot.loadbalancer.server.port=6006"
+        - "traefik.http.services.bot.loadbalancer.sticky=true"
+#        - "traefik.docker.network=backend"
+
+  balancer:
+    hostname: balancer
+    image: traefik:latest
+    command:
+#      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--accesslog=true"
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--entryPoints.ui.address=:5005"
+#      - "--entryPoints.bot.address=:6006"
+      - "--providers.docker.endpoint=unix:///var/run/docker.sock"
+    ports:
+      - "9080:8080"
+      - "5005:6006"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - backend
+    depends_on:
+      - bot
+#    deploy:
+#      labels:
+#        - "traefik.http.services.balancer.loadbalancer.server.port=5005"
+#        - "traefik.http.routers.balancer.entrypoints=bot"
+#        - "traefik.http.routers.balancer.rule=Host(`127.0.0.1:5005`)"
+#        - "traefik.http.routers.balancer.entrypoints=ui"
+#        - "traefik.http.routers.balancer.middlewares=bot_redirect"
+#        - "traefik.http.middlewares.bot_redirect.redirectscheme.scheme=http"
+#        - "traefik.http.middlewares.bot_redirect.redirectscheme.port=6006"
+#        - "traefik.http.middlewares.bot_redirect.redirectscheme.permanent=true"
+#        - "traefik.docker.network=backend"
 
   ui:
+    hostname: ui
     image: sara-ui:latest
     networks:
       - backend
       - frontend
     ports:
       - "80:80"
+    deploy:
+      labels:
+        - "traefik.enable=false"
 
 networks:
   frontend:
   backend:
+    internal: true
 
